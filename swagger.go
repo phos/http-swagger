@@ -9,9 +9,6 @@ import (
 	"github.com/swaggo/swag"
 )
 
-// WrapHandler wraps swaggerFiles.Handler and returns http.HandlerFunc
-var WrapHandler = Handler()
-
 // Config stores httpSwagger configuration variables.
 type Config struct {
 	//The url pointing to API definition (normally swagger.json or swagger.yaml). Default is `doc.json`.
@@ -50,7 +47,7 @@ func DomID(domID string) func(c *Config) {
 }
 
 // Handler wraps `http.Handler` into `http.HandlerFunc`.
-func Handler(configFns ...func(*Config)) http.HandlerFunc {
+func Handler(swagger swag.Swagger, configFns ...func(*Config)) http.HandlerFunc {
 	config := &Config{
 		URL:          "doc.json",
 		DeepLinking:  true,
@@ -80,10 +77,7 @@ func Handler(configFns ...func(*Config)) http.HandlerFunc {
 			_ = index.Execute(w, config)
 		case "doc.json":
 			w.Header().Set("Content-Type", "application/json; charset=utf-8")
-			doc, err := swag.ReadDoc()
-			if err != nil {
-				panic(err)
-			}
+			doc := swagger.ReadDoc()
 			_, _ = w.Write([]byte(doc))
 		case "":
 			http.Redirect(w, r, prefix+"index.html", 301)
